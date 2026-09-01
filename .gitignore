@@ -9,3 +9,4 @@ dist
 coverage
 apps/mobile/android
 apps/mobile/ios
+*.tsbuildinfo
