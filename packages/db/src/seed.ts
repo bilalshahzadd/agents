@@ -1,6 +1,11 @@
-import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import { query, closeDb } from './index.js';
+
+const here = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(here, '..', '..', '..', '.env') });
 
 const email = process.env.SEED_ADMIN_EMAIL;
 const password = process.env.SEED_ADMIN_PASSWORD;

@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import dotenv from 'dotenv';
 import { Redis } from 'ioredis';
 import { Queue, Worker } from 'bullmq';
 import { closeDb, query, transaction } from '@spheric/db';
@@ -6,6 +8,8 @@ import { queueNames, type Platform } from '@spheric/shared';
 import { complianceReview, generateCampaignContent, researchBrief } from '@spheric/agents';
 import { connectorFor } from '@spheric/connectors';
 import crypto from 'node:crypto';
+
+dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '.env') });
 
 const redisUrl = process.env.REDIS_URL;
 if (!redisUrl) throw new Error('REDIS_URL is required');

@@ -1,9 +1,10 @@
-import 'dotenv/config';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import dotenv from 'dotenv';
 import { db, closeDb } from './index.js';
 const here = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(here, '..', '..', '..', '.env') });
 const dir = join(here, '..', 'migrations');
 await db().query('CREATE TABLE IF NOT EXISTS schema_migrations (name text primary key, applied_at timestamptz not null default now())');
 const done = new Set((await db().query<{name:string}>('SELECT name FROM schema_migrations')).rows.map(r=>r.name));
