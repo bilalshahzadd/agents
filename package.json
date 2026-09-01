@@ -1,0 +1,30 @@
+{
+  "name": "spheric-agents",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,worker,web -c auto \"npm run dev -w @spheric/api\" \"npm run dev -w @spheric/worker\" \"npm run dev -w @spheric/web\"",
+    "dev:mobile": "npm run start -w @spheric/mobile",
+    "build": "npm run build -w @spheric/shared && npm run build -w @spheric/db && npm run build -w @spheric/connectors && npm run build -w @spheric/agents && npm run build -w @spheric/api && npm run build -w @spheric/worker && npm run build -w @spheric/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:migrate": "npm run migrate -w @spheric/db",
+    "db:seed": "npm run seed -w @spheric/db",
+    "docker:up": "docker compose up -d postgres redis",
+    "docker:down": "docker compose down",
+    "verify": "npm run typecheck && npm test && npm run build",
+    "bootstrap": "sh scripts/bootstrap.sh"
+  },
+  "devDependencies": {
+    "concurrently": "10.0.3",
+    "typescript": "7.0.2"
+  },
+  "packageManager": "npm@10.9.2"
+}

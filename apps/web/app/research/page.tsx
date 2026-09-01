@@ -1,0 +1,1 @@
+import Shell from '../../components/Shell'; import Research from '../../components/Research'; export default function Page(){return <Shell title="Research & Trends" subtitle="Source-aware research briefs for brand strategy and campaign planning."><Research/></Shell>}

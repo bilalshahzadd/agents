@@ -1,0 +1,1 @@
+import Shell from '../components/Shell'; import Dashboard from '../components/Dashboard'; export default function Page(){return <Shell title="Command Center" subtitle="Live operating state across campaigns, agents, accounts, and approvals."><Dashboard/></Shell>}

@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spheric-db-migrate-REPLACE_SHA
+  namespace: spheric-agents
+spec:
+  backoffLimit: 1
+  template:
+    metadata: { labels: { app: spheric-db-migrate } }
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: registry.example.com/spheric-api:REPLACE_SHA
+          command: ["node", "packages/db/dist/migrate.js"]
+          envFrom:
+            - secretRef: { name: spheric-secrets }
+            - configMapRef: { name: spheric-config }

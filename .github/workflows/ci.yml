@@ -1,0 +1,21 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Install dependencies
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "::warning::package-lock.json is not committed yet; bootstrap install is non-reproducible and cannot be a production release gate."
+            npm install
+          fi
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

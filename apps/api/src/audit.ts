@@ -1,0 +1,2 @@
+import type { FastifyRequest } from 'fastify'; import { query } from '@spheric/db';
+export async function audit(req:FastifyRequest, action:string, entityType?:string, entityId?:string, details:unknown={}){ const a=req.actor; await query('INSERT INTO audit_logs(organization_id,actor_user_id,action,entity_type,entity_id,ip,user_agent,details) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[a?.orgId??null,a?.userId??null,action,entityType??null,entityId??null,req.ip,req.headers['user-agent']??null,JSON.stringify(details)]); }

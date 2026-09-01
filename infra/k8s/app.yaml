@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: spheric-api, namespace: spheric-agents}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: spheric-api}}
+  template:
+    metadata: {labels: {app: spheric-api}}
+    spec:
+      containers:
+      - name: api
+        image: registry.example.com/spheric-api:REPLACE_SHA
+        ports: [{containerPort: 4000}]
+        envFrom: [{secretRef: {name: spheric-secrets}}, {configMapRef: {name: spheric-config}}]
+        readinessProbe: {httpGet: {path: /health, port: 4000}, initialDelaySeconds: 5, periodSeconds: 10}
+        livenessProbe: {httpGet: {path: /health, port: 4000}, initialDelaySeconds: 15, periodSeconds: 20}
+        resources: {requests: {cpu: 250m, memory: 256Mi}, limits: {cpu: "1", memory: 1Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: spheric-api, namespace: spheric-agents}
+spec: {selector: {app: spheric-api}, ports: [{port: 80, targetPort: 4000}]}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: spheric-worker, namespace: spheric-agents}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: spheric-worker}}
+  template:
+    metadata: {labels: {app: spheric-worker}}
+    spec:
+      containers:
+      - name: worker
+        image: registry.example.com/spheric-worker:REPLACE_SHA
+        envFrom: [{secretRef: {name: spheric-secrets}}, {configMapRef: {name: spheric-config}}]
+        resources: {requests: {cpu: 500m, memory: 512Mi}, limits: {cpu: "2", memory: 2Gi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: spheric-web, namespace: spheric-agents}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: spheric-web}}
+  template:
+    metadata: {labels: {app: spheric-web}}
+    spec:
+      containers:
+      - name: web
+        image: registry.example.com/spheric-web:REPLACE_SHA
+        ports: [{containerPort: 3000}]
+        envFrom: [{secretRef: {name: spheric-secrets}}, {configMapRef: {name: spheric-config}}]
+        resources: {requests: {cpu: 200m, memory: 256Mi}, limits: {cpu: "1", memory: 1Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: spheric-web, namespace: spheric-agents}
+spec: {selector: {app: spheric-web}, ports: [{port: 80, targetPort: 3000}]}
