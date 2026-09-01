@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import { Queue, Worker } from 'bullmq';
 import { closeDb, query, transaction } from '@spheric/db';
 import { queueNames, type Platform } from '@spheric/shared';
@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 
 const redisUrl = process.env.REDIS_URL;
 if (!redisUrl) throw new Error('REDIS_URL is required');
-const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
 const publishQueue = new Queue(queueNames.publish, { connection });
 const agentScheduler = new Queue(queueNames.agent, { connection });
 

@@ -1,9 +1,9 @@
-import IORedis from 'ioredis';
+import { Redis } from 'ioredis';
 import { Queue } from 'bullmq';
 import { queueNames } from '@spheric/shared';
 import { env } from './config.js';
 
-const connection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
+const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
 export const agentQueue = new Queue(queueNames.agent, { connection });
 export const publishQueue = new Queue(queueNames.publish, { connection });
 export const analyticsQueue = new Queue(queueNames.analytics, { connection });

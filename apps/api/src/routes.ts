@@ -27,7 +27,7 @@ async function accountMatchesBrandPlatform(accountId: string, brandId: string, p
     "SELECT id FROM social_accounts WHERE id=$1 AND brand_id=$2 AND platform=$3 AND status='connected'",
     [accountId, brandId, platform],
   );
-  return result.rowCount > 0;
+  return (result.rowCount ?? 0) > 0;
 }
 
 async function requeueCampaign(campaignId: string) {
