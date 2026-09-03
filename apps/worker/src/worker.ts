@@ -79,7 +79,7 @@ const agentWorker = new Worker(
     if (job.name !== 'generate-campaign') return;
     const { campaignId, actorUserId } = job.data as { campaignId: string; actorUserId: string };
     const campaignResult = await query<any>(
-      'SELECT c.*,b.name brand_name,b.voice,b.knowledge_base FROM campaigns c JOIN brands b ON b.id=c.brand_id WHERE c.id=$1',
+      'SELECT c.*,c.platforms::text[] AS platforms,b.name brand_name,b.voice,b.knowledge_base FROM campaigns c JOIN brands b ON b.id=c.brand_id WHERE c.id=$1',
       [campaignId],
     );
     if (!campaignResult.rowCount) throw new Error('campaign missing');

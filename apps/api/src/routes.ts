@@ -182,7 +182,7 @@ export async function routes(app: FastifyInstance) {
   });
 
   app.get('/v1/campaigns', { preHandler: authenticate }, async (req) =>
-    (await query('SELECT c.* FROM campaigns c JOIN brands b ON b.id=c.brand_id WHERE b.organization_id=$1 ORDER BY c.created_at DESC LIMIT 200', [req.actor!.orgId])).rows,
+    (await query('SELECT c.*,c.platforms::text[] AS platforms FROM campaigns c JOIN brands b ON b.id=c.brand_id WHERE b.organization_id=$1 ORDER BY c.created_at DESC LIMIT 200', [req.actor!.orgId])).rows,
   );
 
   app.post('/v1/campaigns', { preHandler: requireRole('editor') }, async (req, reply) => {
