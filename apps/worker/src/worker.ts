@@ -226,6 +226,11 @@ const analyticsWorker = new Worker(
   { connection, concurrency: Number(process.env.ANALYTICS_WORKER_CONCURRENCY ?? 5) },
 );
 
+for (const [name, w] of [['agent', agentWorker], ['publish', publishWorker], ['analytics', analyticsWorker]] as const) {
+  w.on('failed', (job, err) => console.error(`[${name}] job ${job?.id} (${job?.name}) failed:`, err?.stack ?? err));
+  w.on('error', (err) => console.error(`[${name}] worker error:`, err?.stack ?? err));
+}
+
 if (process.env.AUTO_RESEARCH_ENABLED === 'true') {
   await agentScheduler.upsertJobScheduler(
     'research-all-brands',
