@@ -3,6 +3,7 @@ import Shell from '../../components/Shell';
 import ListPage from '../../components/ListPage';
 import EditContent from '../../components/EditContent';
 import { api } from '../../lib/api';
+import { withFeedback } from '../../lib/toast';
 
 export default function Page() {
   return <Shell title="Content Queue" subtitle="Human approvals remain explicit for material or higher-risk content.">
@@ -18,10 +19,10 @@ export default function Page() {
       actions={(row, reload) => <div className="toolbar">
         {!['publishing', 'published'].includes(row.status) && <EditContent row={row} onSaved={reload} />}
         {row.status === 'pending_approval' && <>
-          <button className="btn" onClick={async () => { await api(`/content/${row.id}/approve`, { method: 'POST', body: JSON.stringify({ decision: 'approved' }) }); reload(); }}>Approve</button>
-          <button className="btn secondary" onClick={async () => { await api(`/content/${row.id}/approve`, { method: 'POST', body: JSON.stringify({ decision: 'rejected' }) }); reload(); }}>Reject</button>
+          <button className="btn" onClick={withFeedback(() => api(`/content/${row.id}/approve`, { method: 'POST', body: JSON.stringify({ decision: 'approved' }) }), { successMessage: 'Content approved', reload })}>Approve</button>
+          <button className="btn secondary" onClick={withFeedback(() => api(`/content/${row.id}/approve`, { method: 'POST', body: JSON.stringify({ decision: 'rejected' }) }), { successMessage: 'Content rejected', reload })}>Reject</button>
         </>}
-        {['approved', 'failed'].includes(row.status) && <button className="btn secondary" onClick={async () => { await api(`/content/${row.id}/publish`, { method: 'POST' }); reload(); }}>Publish</button>}
+        {['approved', 'failed'].includes(row.status) && <button className="btn secondary" onClick={withFeedback(() => api(`/content/${row.id}/publish`, { method: 'POST' }), { successMessage: 'Publish requested', reload })}>Publish</button>}
       </div>}
     />
   </Shell>;

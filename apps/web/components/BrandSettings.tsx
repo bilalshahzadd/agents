@@ -30,10 +30,14 @@ export default function BrandSettings() {
       <form className="card stack" onSubmit={async (event) => {
         event.preventDefault();
         setMessage('');
-        await api('/brands', { method: 'POST', body: JSON.stringify({ ...create, knowledgeBase: {} }) });
-        setCreate({ name: '', slug: '', voice: '' });
-        setMessage('Brand created.');
-        await load();
+        try {
+          await api('/brands', { method: 'POST', body: JSON.stringify({ ...create, knowledgeBase: {} }) });
+          setCreate({ name: '', slug: '', voice: '' });
+          setMessage('Brand created.');
+          await load();
+        } catch (err) {
+          setMessage(err instanceof Error ? err.message : String(err));
+        }
       }}>
         <strong>Create brand</strong>
         <input className="input" placeholder="Name" required value={create.name} onChange={(event) => setCreate({ ...create, name: event.target.value })} />
