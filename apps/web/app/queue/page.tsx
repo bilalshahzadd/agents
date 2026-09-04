@@ -23,6 +23,7 @@ export default function Page() {
           <button className="btn secondary" onClick={withFeedback(() => api(`/content/${row.id}/approve`, { method: 'POST', body: JSON.stringify({ decision: 'rejected' }) }), { successMessage: 'Content rejected', reload })}>Reject</button>
         </>}
         {['approved', 'failed'].includes(row.status) && <button className="btn secondary" onClick={withFeedback(() => api(`/content/${row.id}/publish`, { method: 'POST' }), { successMessage: 'Publish requested', reload })}>Publish</button>}
+        {!['publishing', 'published'].includes(row.status) && <button className="btn secondary" onClick={() => { if (confirm('Delete this content item? This cannot be undone.')) withFeedback(() => api(`/content/${row.id}`, { method: 'DELETE' }), { successMessage: 'Content deleted', reload })(); }}>Delete</button>}
       </div>}
     />
   </Shell>;

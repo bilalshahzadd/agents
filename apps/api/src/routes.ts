@@ -220,6 +220,18 @@ export async function routes(app: FastifyInstance) {
     return { id, status: body.status };
   });
 
+  app.delete('/v1/campaigns/:id', { preHandler: requireRole('editor') }, async (req, reply) => {
+    const id = z.string().uuid().parse((req.params as { id: string }).id);
+    await unscheduleCampaign(id);
+    const result = await query(
+      'DELETE FROM campaigns c USING brands br WHERE c.brand_id=br.id AND c.id=$1 AND br.organization_id=$2 RETURNING c.id',
+      [id, req.actor!.orgId],
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: 'not_found', message: 'Campaign not found' });
+    await audit(req, 'campaign.delete', 'campaign', id);
+    return reply.code(204).send();
+  });
+
   app.get('/v1/content', { preHandler: authenticate }, async (req) => {
     const params = req.query as { status?: string };
     const status = params.status ? String(params.status) : null;
@@ -343,6 +355,22 @@ export async function routes(app: FastifyInstance) {
     const job = await syncPublishJob(id, new Date());
     await audit(req, 'content.publish_requested', 'content', id, { jobId: job?.id });
     return reply.code(202).send({ jobId: job?.id });
+  });
+
+  app.delete('/v1/content/:id', { preHandler: requireRole('editor') }, async (req, reply) => {
+    const id = z.string().uuid().parse((req.params as { id: string }).id);
+    const item = await query<{ status: string }>(
+      'SELECT ci.status::text FROM content_items ci JOIN campaigns c ON c.id=ci.campaign_id JOIN brands br ON br.id=c.brand_id WHERE ci.id=$1 AND br.organization_id=$2',
+      [id, req.actor!.orgId],
+    );
+    if (!item.rowCount) return reply.code(404).send({ error: 'not_found', message: 'Content not found' });
+    if (['publishing', 'published'].includes(item.rows[0]!.status)) {
+      return reply.code(409).send({ error: 'immutable_state', message: 'Publishing or published content cannot be deleted' });
+    }
+    await syncPublishJob(id, null);
+    await query('DELETE FROM content_items WHERE id=$1', [id]);
+    await audit(req, 'content.delete', 'content', id);
+    return reply.code(204).send();
   });
 
   app.get('/v1/agents', { preHandler: authenticate }, async (req) =>
