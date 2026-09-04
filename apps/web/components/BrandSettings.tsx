@@ -60,7 +60,21 @@ export default function BrandSettings() {
       <div><strong>{selected.name}</strong><div className="sub">Knowledge and voice are retrieved by research and campaign agents.</div></div>
       <label>Voice<textarea className="input" rows={7} value={voice} onChange={(event) => setVoice(event.target.value)} /></label>
       <label>Knowledge base JSON<textarea className="input mono" rows={18} value={knowledge} onChange={(event) => setKnowledge(event.target.value)} /></label>
-      <button className="btn">Save brand</button>
+      <div className="toolbar">
+        <button className="btn">Save brand</button>
+        <button type="button" className="btn secondary" onClick={async () => {
+          if (!confirm(`Delete brand "${selected.name}"? This also deletes its campaigns, content, agents and connected accounts. This cannot be undone.`)) return;
+          try {
+            setMessage('');
+            await api(`/brands/${selected.id}`, { method: 'DELETE' });
+            setSelected(null);
+            setMessage('Brand deleted.');
+            await load();
+          } catch (err) {
+            setMessage(err instanceof Error ? err.message : String(err));
+          }
+        }}>Delete brand</button>
+      </div>
       {message && <div className="sub">{message}</div>}
     </form>}
   </div>;

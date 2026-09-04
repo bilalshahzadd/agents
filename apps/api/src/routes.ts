@@ -162,6 +162,14 @@ export async function routes(app: FastifyInstance) {
     return { id };
   });
 
+  app.delete('/v1/brands/:id', { preHandler: requireRole('admin') }, async (req, reply) => {
+    const id = z.string().uuid().parse((req.params as { id: string }).id);
+    const result = await query('DELETE FROM brands WHERE id=$1 AND organization_id=$2 RETURNING id', [id, req.actor!.orgId]);
+    if (!result.rowCount) return reply.code(404).send({ error: 'not_found', message: 'Brand not found' });
+    await audit(req, 'brand.delete', 'brand', id);
+    return reply.code(204).send();
+  });
+
   app.get('/v1/research-briefs', { preHandler: authenticate }, async (req) => {
     const params = req.query as { brandId?: string };
     const brandId = params.brandId ? z.string().uuid().parse(params.brandId) : null;
@@ -401,6 +409,33 @@ export async function routes(app: FastifyInstance) {
     return { id, enabled: body.enabled };
   });
 
+  app.patch('/v1/agents/:id', { preHandler: requireRole('admin') }, async (req, reply) => {
+    const id = z.string().uuid().parse((req.params as { id: string }).id);
+    const body = z.object({
+      name: z.string().min(2).max(100).optional(),
+      instructions: z.string().min(10).max(12000).optional(),
+      model: z.string().min(1).optional(),
+    }).parse(req.body);
+    const result = await query(
+      'UPDATE agent_profiles ap SET name=COALESCE($3,name),instructions=COALESCE($4,instructions),model=COALESCE($5,model),updated_at=now() FROM brands br WHERE ap.brand_id=br.id AND ap.id=$1 AND br.organization_id=$2 RETURNING ap.id',
+      [id, req.actor!.orgId, body.name ?? null, body.instructions ?? null, body.model ?? null],
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: 'not_found', message: 'Agent not found' });
+    await audit(req, 'agent.update', 'agent', id, { fields: Object.keys(body) });
+    return { id };
+  });
+
+  app.delete('/v1/agents/:id', { preHandler: requireRole('admin') }, async (req, reply) => {
+    const id = z.string().uuid().parse((req.params as { id: string }).id);
+    const result = await query(
+      'DELETE FROM agent_profiles ap USING brands br WHERE ap.brand_id=br.id AND ap.id=$1 AND br.organization_id=$2 RETURNING ap.id',
+      [id, req.actor!.orgId],
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: 'not_found', message: 'Agent not found' });
+    await audit(req, 'agent.delete', 'agent', id);
+    return reply.code(204).send();
+  });
+
   app.get('/v1/social-accounts', { preHandler: authenticate }, async (req) =>
     (await query('SELECT sa.id,sa.brand_id,sa.platform,sa.handle,sa.external_account_id,sa.posting_enabled,sa.status,sa.last_sync_at,sa.created_at FROM social_accounts sa JOIN brands b ON b.id=sa.brand_id WHERE b.organization_id=$1 ORDER BY sa.created_at DESC', [req.actor!.orgId])).rows,
   );
@@ -444,6 +479,32 @@ export async function routes(app: FastifyInstance) {
     await Promise.all(scheduled.rows.map((item) => syncPublishJob(item.id, body.enabled ? item.scheduled_at : null)));
     await audit(req, 'social_account.posting_toggle', 'social_account', id, body);
     return { id, postingEnabled: body.enabled };
+  });
+
+  app.patch('/v1/social-accounts/:id', { preHandler: requireRole('admin') }, async (req, reply) => {
+    const id = z.string().uuid().parse((req.params as { id: string }).id);
+    const body = z.object({
+      handle: z.string().min(1).max(200).optional(),
+      externalAccountId: z.string().min(1).max(200).optional(),
+    }).parse(req.body);
+    const result = await query(
+      'UPDATE social_accounts sa SET handle=COALESCE($3,handle),external_account_id=COALESCE($4,external_account_id),updated_at=now() FROM brands br WHERE sa.brand_id=br.id AND sa.id=$1 AND br.organization_id=$2 RETURNING sa.id',
+      [id, req.actor!.orgId, body.handle ?? null, body.externalAccountId ?? null],
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: 'not_found', message: 'Account not found' });
+    await audit(req, 'social_account.update', 'social_account', id, { fields: Object.keys(body) });
+    return { id };
+  });
+
+  app.delete('/v1/social-accounts/:id', { preHandler: requireRole('admin') }, async (req, reply) => {
+    const id = z.string().uuid().parse((req.params as { id: string }).id);
+    const result = await query(
+      'DELETE FROM social_accounts sa USING brands br WHERE sa.brand_id=br.id AND sa.id=$1 AND br.organization_id=$2 RETURNING sa.id',
+      [id, req.actor!.orgId],
+    );
+    if (!result.rowCount) return reply.code(404).send({ error: 'not_found', message: 'Account not found' });
+    await audit(req, 'social_account.delete', 'social_account', id);
+    return reply.code(204).send();
   });
 
   app.get('/v1/analytics/summary', { preHandler: authenticate }, async (req) => {
